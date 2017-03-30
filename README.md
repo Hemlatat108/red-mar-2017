@@ -24,6 +24,7 @@ import --connect jdbc:oracle:thin:@bootcamp-march2017.cghfmcr8k3ia.us-west-2.rds
 
 Once data was written to the staging table there is a simple script ```insert overwrite table presentation.foo select * from staging.foo```.  This was done to leverage hive locking so that any readers of the presentation database will not be interrupted.
 
+
 ## Import Automation - Oozie
 Oozie was used to automate and schedule the import of the data.  Since all sqoop jobs were very similar we created a single workflow that contains a paremeterized job that runs a sqoop command and then a hive script to load the presentation table.  There is another workflow that creates views and aggregations.
 
@@ -46,3 +47,13 @@ There is a single coordinator that runs the AnomoliesImport workflow twice per d
 Spark can use [JDBC](https://spark.apache.org/docs/1.6.0/sql-programming-guide.html#jdbc-to-other-databases) to retrieve data in a similar fasion to sqoop.  The advantage of this would be that if other spark jobs exists the number of tools used can be reduced.  This works very well for small tables, but was challenging for the largest table.  An index was added to the larger table, but it did not perform nearly as well as the sqoop with ```--direct``` enabled.  The other advantage of spark jdbc was that types are much easier to maintain that with sqoop.
 
 See [SparkJDBCImport.scala](spark/src/main/scala/bootcamp/SparkJDBCImport.scala) for the example code of moving data over to parquet files.
+
+## General Issues
+#### HUE 400 error message
+Navigating to the hue web gui return an 400 error message.
+Add the following in Hue safety Valve in CM
+```
+[desktop]
+allowed_hosts=*
+```
+Restart HUE in CM
