@@ -91,6 +91,27 @@ measurements.filter("AMPLITUDE_1 > 0.995 AND AMPLITUDE_3 > 0.995 AND AMPLITUDE_2
 ...
 ```
 
+## Streaming
+Build a sample streaming system.  Uses a data generator and then
+1. gen-> Flume -> HBASE
+1. gen -> Flume -> Kafka -> Spark Streaming -> Kudu
+
+### Setup
+#### Generator
+[generator](generator/)
+```mvn package```
+From local
+```scp -i *keyfile* /target/bootcamp-0.0.1-SNAPSHOT.jar ec2-user@ec2-35-163-24-37.us-west-2.compute.amazonaws.com:/home/ec2-user/```
+
+Run data generator on the remote host - we chose to run on the same machine where the flume agent was installed.
+```
+java -cp bootcamp-0.0.1-SNAPSHOT.jar com.cloudera.fce.bootcamp.MeasurementGenerator localhost 9999
+```
+
+#### Flume
+
+#### HBASE
+
 ## General Issues
 #### HUE 400 error message
 Navigating to the hue web gui return an 400 error message.
