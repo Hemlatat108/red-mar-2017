@@ -48,6 +48,39 @@ Spark can use [JDBC](https://spark.apache.org/docs/1.6.0/sql-programming-guide.h
 
 See [SparkJDBCImport.scala](spark/src/main/scala/bootcamp/SparkJDBCImport.scala) for the example code of moving data over to parquet files.
 
+### Analyzing Data
+Using the parquet data files written by the jdbc import can be analyzed using the spark dataframe api.  Below are some examples of how to read data, writing any of the intermediate results out can be done in much the same way as the original save.  The only caveat of working with parquet from spark dataframes and interacting with hive is described [here](https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_rn_spark_ki.html) "Tables saved with the Spark SQL DataFrame.saveAsTable method are not compatible with Hive"
+
+```
+val measurements = sqlContext.read.parquet("/user/ec2-user/sparkimport/ADMIN.MEASUREMENTS")
+val detectors = sqlContext.read.parquet("/user/ec2-user/sparkimport/ADMIN.DETECTORS")
+val astrophysicists = sqlContext.read.parquet("/user/ec2-user/sparkimport/ADMIN.ASTROPHYSICISTS")
+
+// Count anomolies
+measurements.filter("AMPLITUDE_1 > 0.995 AND AMPLITUDE_3 > 0.995 AND AMPLITUDE_2 < 0.005").count
+res2: Long = 55  
+
+// Anomolies by detector
+measurements.filter("AMPLITUDE_1 > 0.995 AND AMPLITUDE_3 > 0.995 AND AMPLITUDE_2 < 0.005")
+  .join(detectors, measurements("detector_id") === detectors("detector_id"))
+  .join(astrophysicists, measurements("astrophysicist_id") === astrophysicists("astrophysicist_id"))
+  .groupBy(detectors("detector_name"), astrophysicists("astrophysicist_name"))
+  .count
+  .orderBy(desc("count"))
+  .show(100, false)
++----------------+------------------------+-----+                               
+|detector_name   |astrophysicist_name     |count|
++----------------+------------------------+-----+
+|MiniGRAIL       |Sir Roger Penrose       |2    |
+|MiniGRAIL       |Hannes Alven            |1    |
+|MiniGRAIL       |George Gamow            |1    |
+|LIGO Hanford    |Cecelia Payne-Gaposchkin|1    |
+|AURIGA          |Fritz Zwicky            |1    |
+|LIGO Hanford    |Edmond Halley           |1    |
+|TAMA 300        |Edwin Hubble            |1    |
+...
+```
+
 ## General Issues
 #### HUE 400 error message
 Navigating to the hue web gui return an 400 error message.
