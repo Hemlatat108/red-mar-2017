@@ -1,7 +1,7 @@
 # blue-march-2017
 
 ## Data Import - Sqoop
-Created sqoop jobs to import data from an Oracel database.  There are 4 tables to import:
+Created sqoop jobs to import data from an Oracle database.  There are 4 tables to import:
 
 1. ADMIN.MEASUREMENTS
 1. ADMIN.ASTROPHYSICISTS
@@ -19,7 +19,16 @@ Ultimately the simplest solution was to write the data to a staging database and
 Our solution writes all tables as text to tables with the "correct" types defined.  Presentation database tables were created by doing ```create table foo like bar stored as parquet```.  A sample job to load the text data looks like this:
 
 ```
-import --connect jdbc:oracle:thin:@bootcamp-march2017.cghfmcr8k3ia.us-west-2.rds.amazonaws.com:15210:gravity --username gravity -password *****  --table ${oracletable}  --target-dir /user/admin/staging/${stagingdir} --fields-terminated-by ^ --direct -m ${mappers} -z
+import 
+  --connect jdbc:oracle:thin:@bootcamp-march2017.cghfmcr8k3ia.us-west-2.rds.amazonaws.com:15210:gravity 
+  --username gravity 
+  --password *****  
+  --table ${oracletable} 
+  --target-dir /user/admin/staging/${stagingdir} 
+  --fields-terminated-by ^ 
+  --direct 
+  -m ${mappers} 
+  -z
 ```
 
 Once data was written to the staging table there is a simple script ```insert overwrite table presentation.foo select * from staging.foo```.  This was done to leverage hive locking so that any readers of the presentation database will not be interrupted.
@@ -33,13 +42,12 @@ Troubleshooting time was spent mainly on parameter passing.  We had a good idea 
 ### Workflows
 1. ImportTables
     1. Sqoop job to copy data to staging directory
-    1. Hive script to insert overwrite table in presentation directory.
+    1. Hive script to insert overwrite table in the presentation directory.
 1. Materialize - transforms data and prepares it for use.
 1. AnomoliesImport - Parent job that calls 4 instances of ImportTables in parallel and then calls the Materialize workflow.
 
 ### Corrdinator
 There is a single coordinator that runs the AnomoliesImport workflow twice per day.
-
 
 ## Spark
 
@@ -49,7 +57,9 @@ Spark can use [JDBC](https://spark.apache.org/docs/1.6.0/sql-programming-guide.h
 See [SparkJDBCImport.scala](spark/src/main/scala/bootcamp/SparkJDBCImport.scala) for the example code of moving data over to parquet files.
 
 ### Analyzing Data
-Using the parquet data files written by the jdbc import can be analyzed using the spark dataframe api.  Below are some examples of how to read data, writing any of the intermediate results out can be done in much the same way as the original save.  The only caveat of working with parquet from spark dataframes and interacting with hive is described [here](https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_rn_spark_ki.html) "Tables saved with the Spark SQL DataFrame.saveAsTable method are not compatible with Hive"
+Using the parquet data files written by the jdbc import can be analyzed using the spark dataframe api.  Below are some examples of how to read data, writing any of the intermediate results out can be done in much the same way as the original save.  The only caveat of working with parquet from spark dataframes and interacting with hive is described [here](https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_rn_spark_ki.html) 
+
+"Tables saved with the Spark SQL DataFrame.saveAsTable method are not compatible with Hive"
 
 ```
 val measurements = sqlContext.read.parquet("/user/ec2-user/sparkimport/ADMIN.MEASUREMENTS")
