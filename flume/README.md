@@ -9,6 +9,10 @@ To test with a single message:
 
 ## lssues
 
-- Caused by: org.apache.flume.ChannelFullException: Space for commit to queue couldn't be acquired. Sinks are likely not keeping up with sources, or the buffer size is too tight
+- Error message seen
+```
+Caused by: org.apache.flume.ChannelFullException: Space for commit to queue couldn't be acquired. Sinks are likely not keeping up with sources, or the buffer size is too tight
+```
+- Solution: add capacity limit to flume configuration
+  - tier1.channels.channel1.capacity = 100
 
-  - add 
