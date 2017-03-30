@@ -1,4 +1,4 @@
-# blue-march-2017
+# red-mar-2017
 
 ## Data Import - Sqoop
 Created sqoop jobs to import data from an Oracle database.  There are 4 tables to import:
